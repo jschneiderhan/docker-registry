@@ -34,5 +34,30 @@ def load():
     flavor = os.environ.get('SETTINGS_FLAVOR', 'dev')
     config.update(data.get(flavor, {}))
     config['flavor'] = flavor
+    load_environment_variables(config)
     _config = Config(config)
     return _config
+
+def load_environment_variables(config):
+    env_variables = {
+        's3_access_key': os.environ.get("DOCKER_S3_ACCESS_KEY"),
+        's3_secret_key': os.environ.get("DOCKER_S3_SECRET_KEY"),
+        's3_bucket':     os.environ.get("DOCKER_S3_BUCKET"),
+        'storage':       os.environ.get("DOCKER_STORAGE"),
+        'storage_path':  os.environ.get("DOCKER_STORAGE_PATH"),
+        'loglevel':      os.environ.get("DOCKER_LOGLEVEL"),
+        'secret_key':    os.environ.get("DOCKER_SECRET_KEY")
+    }
+    config.update(without_empty_values(env_variables))
+
+    email_exceptions_env_variables = {
+        'smtp_host':     os.environ.get("DOCKER_EMAIL_EXCEPTIONS_SMTP_HOST"),
+        'smtp_login':    os.environ.get("DOCKER_EMAIL_EXCEPTIONS_SMTP_LOGIN"),
+        'smtp_password': os.environ.get("DOCKER_EMAIL_EXCEPTIONS_SMTP_PASSWORD"),
+        'from_addr':     os.environ.get("DOCKER_EMAIL_EXCEPTIONS_FROM_ADDR"),
+        'to_addr':       os.environ.get("DOCKER_EMAIL_EXCEPTIONS_TO_ADDR")
+    }
+    config.setdefault('email_exceptions', {}).update(without_empty_values(email_exceptions_env_variables))
+
+def without_empty_values(items):
+    return dict((k, v) for k, v in items.iteritems() if v)
